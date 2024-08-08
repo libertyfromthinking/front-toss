@@ -16,6 +16,9 @@ const PayListPage = () => {
   const [uuidKey, setUuidKey] = useState('');
   const [encryptKey, setEnchryptKey] = useState('');
   const [paidList, setPaidList] = useState([]);
+  const [isCancelModal, setCancelModal] = useState(false);
+  const [cancelAmount, setCancelAmount] = useState(0);
+  const [cancelKey, setCancelKey] = useState('');
 
   useEffect(() => {
     setUuidKey(uuid());
@@ -33,7 +36,7 @@ const PayListPage = () => {
     try {
       const response = await axios.post(
         `https://api.tosspayments.com/v1/payments/${paymentKey}/cancel`,
-        { cancelReason: '고객이 취소를 원함' },
+        { cancelReason: '고객이 취소를 원함', cancelAmount },
         {
           headers: {
             Authorization: encryptKey,
@@ -58,7 +61,17 @@ const PayListPage = () => {
       alert('취소실패!!!');
     }
   };
-  return (
+  return isCancelModal ? (
+    <ModalContainer>
+      <CancelInput
+        defaultValue={cancelAmount}
+        value={cancelAmount}
+        onChange={(e) => setCancelAmount(Number(e.target.value))}
+      />
+      <SubmitBtn onClick={handleCancel.bind(null, cancelKey)}>확인</SubmitBtn>
+      <SubmitBtn onClick={() => setCancelModal(false)}>취소</SubmitBtn>
+    </ModalContainer>
+  ) : (
     <Container>
       {paidList.length > 0 ? (
         paidList.map((item: PaymentData) => {
@@ -68,7 +81,13 @@ const PayListPage = () => {
                 orderId: {item.orderId} amount: {item.amount} paymentKey:{' '}
                 {item.paymentKey}
               </PayItem>
-              <CancelBtn onClick={handleCancel.bind(null, item.paymentKey)}>
+              <CancelBtn
+                onClick={() => {
+                  setCancelModal(true);
+                  setCancelAmount(item.amount);
+                  setCancelKey(item.paymentKey);
+                }}
+              >
                 취소하기
               </CancelBtn>
             </ItemWrapper>
@@ -88,6 +107,23 @@ const PayListPage = () => {
   );
 };
 
+const CancelInput = styled.input`
+  height: 30%;
+`;
+const SubmitBtn = styled.button``;
+
+const ModalContainer = styled.div`
+  width: 380px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #fff;
+  position: relative;
+  left: 50%;
+  top: 20%;
+  gap: 10px;
+`;
 const Container = styled.div`
   margin-top: 10%;
   width: 100%;
